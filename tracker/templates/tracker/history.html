@@ -1,0 +1,144 @@
+﻿{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Nutrition History & Trends - NutriPulse{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Nutrition History & Weekly Trends</h1>
+        <p class="text-secondary mb-0">Track your adherence and macronutrient progression over time</p>
+    </div>
+    <div class="btn-group">
+        <a href="?days=7" class="btn btn-sm {% if days == 7 %}btn-primary{% else %}btn-outline-secondary{% endif %}">7 Days</a>
+        <a href="?days=14" class="btn btn-sm {% if days == 14 %}btn-primary{% else %}btn-outline-secondary{% endif %}">14 Days</a>
+        <a href="?days=30" class="btn btn-sm {% if days == 30 %}btn-primary{% else %}btn-outline-secondary{% endif %}">30 Days</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Calorie Adherence Chart -->
+    <div class="col-12">
+        <div class="card-custom">
+            <h5 class="fw-bold mb-3"><i class="bi bi-graph-up text-primary me-2"></i>Calorie Intake vs Daily Goal ({{ days }} Days)</h5>
+            <div style="height: 320px; position: relative;">
+                <canvas id="historyCalorieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Macronutrient Trends Chart -->
+    <div class="col-12">
+        <div class="card-custom">
+            <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart text-info me-2"></i>Macronutrient Trends (Protein, Carbs & Fat)</h5>
+            <div style="height: 320px; position: relative;">
+                <canvas id="historyMacroChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const historyDates = {{ dates_json|safe }};
+    const historyCals = {{ cals_json|safe }};
+    const goalCalorie = {{ goal_calories }};
+    const historyProtein = {{ protein_json|safe }};
+    const historyCarbs = {{ carbs_json|safe }};
+    const historyFat = {{ fat_json|safe }};
+
+    // Calories Chart
+    new Chart(document.getElementById('historyCalorieChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: historyDates,
+            datasets: [
+                {
+                    label: 'Consumed (kcal)',
+                    data: historyCals,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 2,
+                    pointBackgroundColor: '#10b981',
+                },
+                {
+                    label: 'Goal Target',
+                    data: Array(historyDates.length).fill(goalCalorie),
+                    borderColor: '#f59e0b',
+                    borderDash: [6, 6],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#94a3b8' } }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Macros Chart
+    new Chart(document.getElementById('historyMacroChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: historyDates,
+            datasets: [
+                {
+                    label: 'Protein (g)',
+                    data: historyProtein,
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Carbohydrates (g)',
+                    data: historyCarbs,
+                    backgroundColor: '#f59e0b',
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Fat (g)',
+                    data: historyFat,
+                    backgroundColor: '#ec4899',
+                    borderRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#94a3b8' } }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

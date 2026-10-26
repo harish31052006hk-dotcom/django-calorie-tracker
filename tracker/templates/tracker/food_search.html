@@ -1,0 +1,177 @@
+﻿{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Search Foods - NutriPulse{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Food Database & Nutrition Search</h1>
+        <p class="text-secondary mb-0">Search verified Indian staples, international goods, and external APIs</p>
+    </div>
+    <a href="{% url 'tracker:create_custom_food' %}" class="btn-primary-custom">
+        <i class="bi bi-plus-circle"></i> Create Custom Food
+    </a>
+</div>
+
+<!-- Search Form -->
+<div class="card-custom mb-4">
+    <form method="GET" action="{% url 'tracker:food_search' %}" class="row g-3">
+        <input type="hidden" name="meal_type" value="{{ meal_type }}">
+        <input type="hidden" name="date" value="{{ target_date }}">
+
+        <div class="col-md-5">
+            <label class="form-label">Search Query</label>
+            <div class="input-group">
+                <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="e.g. Dosa, Idli, Rice, Chicken Biryani, Oats, Milk...">
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Category</label>
+            <select name="category" class="form-select">
+                <option value="all">All Categories</option>
+                {% for code, label in categories %}
+                    <option value="{{ code }}" {% if selected_category == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Meal Slot</label>
+            <select name="meal_type" class="form-select" onchange="this.form.submit()">
+                <option value="breakfast" {% if meal_type == 'breakfast' %}selected{% endif %}>Breakfast</option>
+                <option value="lunch" {% if meal_type == 'lunch' %}selected{% endif %}>Lunch</option>
+                <option value="dinner" {% if meal_type == 'dinner' %}selected{% endif %}>Dinner</option>
+                <option value="snack" {% if meal_type == 'snack' %}selected{% endif %}>Snacks</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn-primary-custom w-100 py-2">
+                Search
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Quick Favorites Bar if any -->
+{% if favorites %}
+<div class="card-custom mb-4 py-2 px-3">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="text-warning small fw-bold"><i class="bi bi-star-fill"></i> Favorites:</span>
+        {% for fav in favorites %}
+            <a href="{% url 'tracker:food_detail' fav.food.id %}?meal_type={{ meal_type }}&date={{ target_date }}" class="badge bg-secondary text-decoration-none py-2 px-3">
+                {{ fav.food.name }} ({{ fav.food.calories_per_100g }} kcal)
+            </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Local Food Database Results -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Local Verified Database ({{ local_foods|length }} items)</h5>
+        <small class="text-secondary">Nutritional values given per 100g standard</small>
+    </div>
+
+    {% if local_foods %}
+        <div class="row g-3">
+            {% for food in local_foods %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card-custom h-100 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge-category">{{ food.get_category_display }}</span>
+                                <span class="badge-source">{{ food.get_source_type_display }}</span>
+                            </div>
+                            <h6 class="fw-bold mb-1 text-white">{{ food.name }}</h6>
+                            <p class="text-muted small mb-3">{{ food.brand_or_source }}</p>
+
+                            <div class="row text-center g-2 py-2 mb-3 rounded bg-dark">
+                                <div class="col-3">
+                                    <small class="text-muted d-block">Calories</small>
+                                    <span class="fw-bold text-success">{{ food.calories_per_100g|floatformat:0 }}</span>
+                                </div>
+                                <div class="col-3">
+                                    <small class="text-muted d-block">Protein</small>
+                                    <span class="fw-bold text-primary">{{ food.protein_per_100g }}g</span>
+                                </div>
+                                <div class="col-3">
+                                    <small class="text-muted d-block">Carbs</small>
+                                    <span class="fw-bold text-warning">{{ food.carbs_per_100g }}g</span>
+                                </div>
+                                <div class="col-3">
+                                    <small class="text-muted d-block">Fat</small>
+                                    <span class="fw-bold text-danger">{{ food.fat_per_100g }}g</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'tracker:food_detail' food.id %}?meal_type={{ meal_type }}&date={{ target_date }}" class="btn-primary-custom btn-sm w-100">
+                                Select & Log &rarr;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card-custom text-center py-5">
+            <i class="bi bi-search text-muted fs-1 mb-2"></i>
+            <h5 class="fw-bold">No matching local foods found</h5>
+            <p class="text-muted mb-3">Try checking spelling, or search external databases below, or add a custom food.</p>
+            <a href="{% url 'tracker:create_custom_food' %}" class="btn-secondary-custom">Create Custom Food</a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Online Search Results (USDA FoodData Central & Open Food Facts) -->
+{% if online_results %}
+<div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-cloud-arrow-down text-info me-2"></i>Online Nutrition Results (USDA & Open Food Facts)</h5>
+        <span class="badge bg-info text-dark">Live API Connected</span>
+    </div>
+
+    <div class="row g-3">
+        {% for item in online_results %}
+            <div class="col-md-6">
+                <div class="card-custom d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-primary text-uppercase me-2" style="font-size: 0.65rem;">{{ item.source_type }}</span>
+                        <strong class="text-white">{{ item.name|truncatechars:38 }}</strong>
+                        <div class="small text-muted mt-1">
+                            {{ item.brand_or_source }} &bull; {{ item.calories_per_100g }} kcal / 100g (P: {{ item.protein_per_100g }}g, C: {{ item.carbs_per_100g }}g, F: {{ item.fat_per_100g }}g)
+                        </div>
+                    </div>
+                    <form method="POST" action="{% url 'tracker:import_online_food' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="name" value="{{ item.name }}">
+                        <input type="hidden" name="brand_or_source" value="{{ item.brand_or_source }}">
+                        <input type="hidden" name="source_type" value="{{ item.source_type }}">
+                        <input type="hidden" name="external_id" value="{{ item.external_id }}">
+                        <input type="hidden" name="calories_per_100g" value="{{ item.calories_per_100g }}">
+                        <input type="hidden" name="protein_per_100g" value="{{ item.protein_per_100g }}">
+                        <input type="hidden" name="carbs_per_100g" value="{{ item.carbs_per_100g }}">
+                        <input type="hidden" name="fat_per_100g" value="{{ item.fat_per_100g }}">
+                        <input type="hidden" name="fiber_per_100g" value="{{ item.fiber_per_100g }}">
+                        <input type="hidden" name="sugar_per_100g" value="{{ item.sugar_per_100g }}">
+                        <input type="hidden" name="sodium_per_100g" value="{{ item.sodium_per_100g }}">
+                        <input type="hidden" name="meal_type" value="{{ meal_type }}">
+                        <input type="hidden" name="date" value="{{ target_date }}">
+                        <button type="submit" class="btn-secondary-custom btn-sm text-nowrap">
+                            <i class="bi bi-download"></i> Import
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

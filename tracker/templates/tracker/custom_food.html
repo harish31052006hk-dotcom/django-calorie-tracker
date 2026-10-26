@@ -1,0 +1,81 @@
+﻿{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Create Custom Food - NutriPulse{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card-custom">
+            <h3 class="fw-bold mb-1 text-white"><i class="bi bi-plus-circle text-primary me-2"></i>Create Custom Food or Recipe</h3>
+            <p class="text-secondary mb-4">Enter nutritional facts standard per 100 grams. This food will remain saved to your private library.</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Food Name *</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Brand / Source / Cook</label>
+                        {{ form.brand_or_source }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Category</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Typical Serving Description</label>
+                        {{ form.serving_description }}
+                    </div>
+                </div>
+
+                <h5 class="fw-bold mt-4 mb-3 border-top border-secondary border-opacity-10 pt-3">Nutrition per 100 Grams</h5>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3 col-6">
+                        <label class="form-label text-success fw-bold">Calories (kcal) *</label>
+                        {{ form.calories_per_100g }}
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <label class="form-label text-primary fw-bold">Protein (g) *</label>
+                        {{ form.protein_per_100g }}
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <label class="form-label text-warning fw-bold">Carbs (g) *</label>
+                        {{ form.carbs_per_100g }}
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <label class="form-label text-danger fw-bold">Fat (g) *</label>
+                        {{ form.fat_per_100g }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Fiber (g)</label>
+                        {{ form.fiber_per_100g }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Sugars (g)</label>
+                        {{ form.sugar_per_100g }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Sodium (mg)</label>
+                        {{ form.sodium_per_100g }}
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-primary-custom flex-grow-1 py-2">Save & Open Food</button>
+                    <a href="{% url 'tracker:food_search' %}" class="btn-secondary-custom py-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

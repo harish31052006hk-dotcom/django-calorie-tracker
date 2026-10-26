@@ -1,0 +1,74 @@
+﻿{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - NutriPulse Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="card-custom">
+            <div class="text-center mb-4">
+                <div class="brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                    <i class="bi bi-activity"></i>
+                </div>
+                <h3 class="fw-bold text-white mb-1">Create Your Account</h3>
+                <p class="text-secondary small">Start tracking your nutrition and achieving fitness goals</p>
+            </div>
+
+            {% if form.errors %}
+                <div class="alert alert-danger py-2 small" role="alert">
+                    Please correct the highlighted errors below.
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Username *</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<small class="text-danger">{{ form.username.errors.0 }}</small>{% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email Address *</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<small class="text-danger">{{ form.email.errors.0 }}</small>{% endif %}
+                </div>
+
+                <div class="row g-2 mb-4">
+                    <div class="col-6">
+                        <label class="form-label">Password *</label>
+                        {{ form.password }}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Confirm Password *</label>
+                        {{ form.password_confirm }}
+                    </div>
+                    {% if form.password_confirm.errors %}<small class="text-danger">{{ form.password_confirm.errors.0 }}</small>{% endif %}
+                </div>
+
+                <button type="submit" class="btn-primary-custom w-100 py-2 mb-3">
+                    Register & Start Tracking
+                </button>
+            </form>
+
+            <div class="text-center mt-3 pt-3 border-top border-secondary border-opacity-10">
+                <small class="text-secondary">Already have an account? 
+                    <a href="{% url 'tracker:login' %}" class="text-primary text-decoration-none fw-semibold">Sign In</a>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

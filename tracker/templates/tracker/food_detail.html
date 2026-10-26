@@ -1,0 +1,114 @@
+﻿{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}{{ food.name }} - Nutrition Details{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <a href="{% url 'tracker:food_search' %}?meal_type={{ meal_type }}&date={{ target_date }}" class="text-secondary text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Back to Food Search
+            </a>
+
+            <!-- Favorite toggle button -->
+            <form method="POST" action="{% url 'tracker:toggle_favorite' food.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm {% if is_favorite %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+                    <i class="bi bi-star{% if is_favorite %}-fill{% endif %}"></i> {% if is_favorite %}Favorited{% else %}Save Favorite{% endif %}
+                </button>
+            </form>
+        </div>
+
+        <div class="card-custom mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge-category">{{ food.get_category_display }}</span>
+                    <h2 class="h3 fw-bold mt-2 text-white mb-1">{{ food.name }}</h2>
+                    <p class="text-secondary mb-0">{{ food.brand_or_source|default:"Standard Culinary Reference" }}</p>
+                </div>
+                <span class="badge-source">{{ food.get_source_type_display }}</span>
+            </div>
+
+            <div class="p-3 rounded mb-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);">
+                <div class="text-secondary small mb-1">Standard Reference:</div>
+                <div class="fw-semibold">100 grams provides <span class="text-success">{{ food.calories_per_100g }} kcal</span></div>
+                {% if food.serving_description %}
+                    <small class="text-muted">Common serving guidance: {{ food.serving_description }}</small>
+                {% endif %}
+            </div>
+
+            <!-- Interactive Quantity Calculator & Diary Add Form -->
+            <form method="POST" action="{% url 'tracker:add_to_diary' food.id %}">
+                {% csrf_token %}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Meal Type</label>
+                        <select name="meal_type" class="form-select">
+                            <option value="breakfast" {% if meal_type == 'breakfast' %}selected{% endif %}>Breakfast</option>
+                            <option value="lunch" {% if meal_type == 'lunch' %}selected{% endif %}>Lunch</option>
+                            <option value="dinner" {% if meal_type == 'dinner' %}selected{% endif %}>Dinner</option>
+                            <option value="snack" {% if meal_type == 'snack' %}selected{% endif %}>Snacks</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" value="{{ target_date }}" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Quantity Consumed (grams)</label>
+                        <input type="number" id="calc-quantity-input" data-food-id="{{ food.id }}" name="quantity_in_grams" value="{{ quantity|floatformat:0 }}" min="1" max="5000" step="1" class="form-control fw-bold text-success" required>
+                    </div>
+                </div>
+
+                <!-- Real-Time Calculated Nutritional Breakdown -->
+                <h5 class="fw-bold mb-3"><i class="bi bi-calculator text-primary me-2"></i>Calculated Nutrition for this Portion</h5>
+                <div class="row g-3 mb-4 text-center">
+                    <div class="col-sm-3 col-6">
+                        <div class="stat-card cals py-2">
+                            <small class="text-muted d-block">Calories</small>
+                            <span id="preview-cals" class="fs-4 fw-bold text-success">{{ calc.calories }} kcal</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-6">
+                        <div class="stat-card protein py-2">
+                            <small class="text-muted d-block">Protein</small>
+                            <span id="preview-protein" class="fs-4 fw-bold text-primary">{{ calc.protein }} g</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-6">
+                        <div class="stat-card carbs py-2">
+                            <small class="text-muted d-block">Carbohydrates</small>
+                            <span id="preview-carbs" class="fs-4 fw-bold text-warning">{{ calc.carbs }} g</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3 col-6">
+                        <div class="stat-card fat py-2">
+                            <small class="text-muted d-block">Total Fat</small>
+                            <span id="preview-fat" class="fs-4 fw-bold text-danger">{{ calc.fat }} g</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-4 p-3 rounded bg-dark small">
+                    <div class="col-4">
+                        <span class="text-muted">Dietary Fiber:</span> <strong id="preview-fiber">{{ calc.fiber }} g</strong>
+                    </div>
+                    <div class="col-4">
+                        <span class="text-muted">Sugars:</span> <strong id="preview-sugar">{{ calc.sugar }} g</strong>
+                    </div>
+                    <div class="col-4">
+                        <span class="text-muted">Sodium:</span> <strong id="preview-sodium">{{ calc.sodium }} mg</strong>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary-custom w-100 py-3 fs-5">
+                    <i class="bi bi-plus-lg me-2"></i> Add to Food Diary
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+﻿{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Profile & Nutrition Goals - NutriPulse{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Profile & Metrics -->
+    <div class="col-lg-6">
+        <div class="card-custom h-100">
+            <h4 class="fw-bold mb-3 text-white"><i class="bi bi-person-badge text-primary me-2"></i>Physical Profile</h4>
+            <p class="text-secondary small mb-4">Keep your stats updated to generate optimal calorie targets</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Gender</label>
+                        {{ profile_form.gender }}
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Date of Birth</label>
+                        {{ profile_form.date_of_birth }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-4">
+                        <label class="form-label">Height (cm)</label>
+                        {{ profile_form.height_cm }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Current Wt (kg)</label>
+                        {{ profile_form.current_weight_kg }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Target Wt (kg)</label>
+                        {{ profile_form.target_weight_kg }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Activity Level</label>
+                    {{ profile_form.activity_level }}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Primary Fitness Goal</label>
+                    {{ profile_form.goal_type }}
+                </div>
+
+                <button type="submit" class="btn-primary-custom w-100">
+                    Update Profile
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Daily Nutrition Targets & Macro Calculator -->
+    <div class="col-lg-6">
+        <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0 text-white"><i class="bi bi-bullseye text-warning me-2"></i>Nutrition Targets</h4>
+                <form method="POST" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="auto_calculate_macros">
+                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-magic"></i> Auto-Compute Targets
+                    </button>
+                </form>
+            </div>
+            <p class="text-secondary small mb-4">Set your daily limits or click Auto-Compute to generate science-based targets from your BMR & TDEE.</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_goals">
+
+                <div class="mb-3">
+                    <label class="form-label text-success fw-bold">Daily Calorie Target (kcal)</label>
+                    {{ goal_form.daily_calories }}
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-4">
+                        <label class="form-label text-primary fw-bold">Protein (g)</label>
+                        {{ goal_form.protein_grams }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label text-warning fw-bold">Carbs (g)</label>
+                        {{ goal_form.carbs_grams }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label text-danger fw-bold">Fat (g)</label>
+                        {{ goal_form.fat_grams }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-4">
+                        <label class="form-label">Fiber (g)</label>
+                        {{ goal_form.fiber_grams }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Sugar Limit (g)</label>
+                        {{ goal_form.sugar_grams }}
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Sodium Limit (mg)</label>
+                        {{ goal_form.sodium_mg }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary-custom w-100">
+                    Save Nutrition Goals
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

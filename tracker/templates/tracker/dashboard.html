@@ -1,0 +1,271 @@
+﻿{% extends 'tracker/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - NutriPulse Tracker{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Fitness Dashboard</h1>
+        <p class="text-secondary mb-0">Overview for {{ selected_date|date:"l, F d, Y" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'tracker:food_search' %}?meal_type=breakfast&date={{ selected_date|date:'Y-m-d' }}" class="btn-primary-custom">
+            <i class="bi bi-plus-lg"></i> Track Food
+        </a>
+        <a href="{% url 'tracker:food_diary' %}?date={{ selected_date|date:'Y-m-d' }}" class="btn-secondary-custom">
+            <i class="bi bi-journal-text"></i> Open Diary
+        </a>
+    </div>
+</div>
+
+<!-- Date Navigation Bar -->
+<div class="date-navigator mb-4">
+    <a href="?date={{ prev_date|date:'Y-m-d' }}" class="date-btn">
+        <i class="bi bi-chevron-left me-1"></i> {{ prev_date|date:"M d" }}
+    </a>
+    <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-calendar3 text-primary"></i>
+        <form method="GET" class="d-inline">
+            <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" onchange="this.form.submit()" class="form-control form-control-sm text-center" style="width: 145px; display: inline-block;">
+        </form>
+        {% if not is_today %}
+            <a href="{% url 'tracker:dashboard' %}" class="badge bg-secondary text-decoration-none ms-2">Go to Today</a>
+        {% endif %}
+    </div>
+    <a href="?date={{ next_date|date:'Y-m-d' }}" class="date-btn">
+        {{ next_date|date:"M d" }} <i class="bi bi-chevron-right ms-1"></i>
+    </a>
+</div>
+
+<!-- Quick Metric Highlights Grid -->
+<div class="row g-3 mb-4">
+    <!-- Calories Card -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card cals">
+            <div class="stat-label">Daily Calories</div>
+            <div class="stat-value">{{ total_cals }} <span class="fs-6 fw-normal text-muted">/ {{ goal.daily_calories }} kcal</span></div>
+            <div class="macro-progress-bg">
+                <div class="macro-progress-fill" style="width: {{ cals_pct }}%; background: var(--cals-color);"></div>
+            </div>
+            <div class="stat-sub d-flex justify-content-between mt-2">
+                <span>{{ cals_pct }}% consumed</span>
+                <span class="{% if remaining_cals < 0 %}text-danger fw-bold{% else %}text-success{% endif %}">
+                    {% if remaining_cals >= 0 %}{{ remaining_cals }} left{% else %}{{ remaining_cals|stringformat:"+d"|slice:"1:" }} over{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Protein Card -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card protein">
+            <div class="stat-label">Protein</div>
+            <div class="stat-value">{{ total_protein }}g <span class="fs-6 fw-normal text-muted">/ {{ goal.protein_grams }}g</span></div>
+            <div class="macro-progress-bg">
+                <div class="macro-progress-fill" style="width: {{ protein_pct }}%; background: var(--protein-color);"></div>
+            </div>
+            <div class="stat-sub mt-2">{{ protein_pct }}% of daily target</div>
+        </div>
+    </div>
+
+    <!-- Carbs Card -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card carbs">
+            <div class="stat-label">Carbohydrates</div>
+            <div class="stat-value">{{ total_carbs }}g <span class="fs-6 fw-normal text-muted">/ {{ goal.carbs_grams }}g</span></div>
+            <div class="macro-progress-bg">
+                <div class="macro-progress-fill" style="width: {{ carbs_pct }}%; background: var(--carbs-color);"></div>
+            </div>
+            <div class="stat-sub mt-2">{{ carbs_pct }}% of daily target</div>
+        </div>
+    </div>
+
+    <!-- Fat Card -->
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card fat">
+            <div class="stat-label">Fat</div>
+            <div class="stat-value">{{ total_fat }}g <span class="fs-6 fw-normal text-muted">/ {{ goal.fat_grams }}g</span></div>
+            <div class="macro-progress-bg">
+                <div class="macro-progress-fill" style="width: {{ fat_pct }}%; background: var(--fat-color);"></div>
+            </div>
+            <div class="stat-sub mt-2">{{ fat_pct }}% of daily target</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Diary Row -->
+<div class="row g-4 mb-4">
+    <!-- Weekly Bar Chart -->
+    <div class="col-lg-8">
+        <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-bar-chart-line text-primary me-2"></i>Weekly Calorie Intake</h5>
+                <a href="{% url 'tracker:history' %}" class="text-secondary text-decoration-none small">View Detailed History &rarr;</a>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="weeklyCalorieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Macro Breakdown Doughnut Chart -->
+    <div class="col-lg-4">
+        <div class="card-custom h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart text-warning me-2"></i>Macronutrient Split</h5>
+            <div style="height: 220px; position: relative;">
+                <canvas id="macroDonutChart"></canvas>
+            </div>
+            <div class="row text-center mt-3 pt-2 border-top border-secondary border-opacity-10">
+                <div class="col-4">
+                    <span class="d-inline-block rounded-circle" style="width:8px;height:8px;background:var(--protein-color)"></span>
+                    <small class="d-block text-muted">Prot</small>
+                    <span class="fw-bold small">{{ total_protein }}g</span>
+                </div>
+                <div class="col-4">
+                    <span class="d-inline-block rounded-circle" style="width:8px;height:8px;background:var(--carbs-color)"></span>
+                    <small class="d-block text-muted">Carbs</small>
+                    <span class="fw-bold small">{{ total_carbs }}g</span>
+                </div>
+                <div class="col-4">
+                    <span class="d-inline-block rounded-circle" style="width:8px;height:8px;background:var(--fat-color)"></span>
+                    <small class="d-block text-muted">Fat</small>
+                    <span class="fw-bold small">{{ total_fat }}g</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Meals Snapshot & Recent Log -->
+<div class="row g-4">
+    <!-- Meals breakdown for day -->
+    <div class="col-lg-7">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-journal-check text-success me-2"></i>Today's Meals</h5>
+                <a href="{% url 'tracker:food_diary' %}?date={{ selected_date|date:'Y-m-d' }}" class="text-primary text-decoration-none small">Full Diary &rarr;</a>
+            </div>
+
+            {% for m_key, m_info in meals.items %}
+                <div class="p-3 mb-2 rounded bg-opacity-25 bg-secondary d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="text-capitalize">{{ m_key }}</strong>
+                        <small class="text-muted ms-2">{{ m_info.entries|length }} items</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-dark text-white px-2 py-1">{{ m_info.cals|floatformat:1 }} kcal</span>
+                        <a href="{% url 'tracker:food_search' %}?meal_type={{ m_key }}&date={{ selected_date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-plus"></i>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent food log entries -->
+    <div class="col-lg-5">
+        <div class="card-custom">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-info me-2"></i>Recently Logged</h5>
+            {% if recent_entries %}
+                <div class="list-group list-group-flush bg-transparent">
+                    {% for entry in recent_entries %}
+                        <div class="list-group-item bg-transparent text-white border-secondary border-opacity-25 px-0 py-2 d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">{{ entry.food.name|truncatechars:26 }}</div>
+                                <small class="text-muted">{{ entry.quantity_in_grams }}g &bull; {{ entry.get_meal_type_display }} ({{ entry.date|date:"M d" }})</small>
+                            </div>
+                            <span class="fw-bold text-success">{{ entry.calories }} kcal</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-cup-hot fs-2 mb-2 d-block"></i>
+                    <p class="mb-2">No food entries logged yet.</p>
+                    <a href="{% url 'tracker:food_search' %}" class="btn-primary-custom btn-sm">Find Food Now</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const weekLabels = {{ week_days_json|safe }};
+    const weekCals = {{ week_cals_json|safe }};
+    const weekGoals = {{ week_goals_json|safe }};
+
+    const ctxWeekly = document.getElementById('weeklyCalorieChart').getContext('2d');
+    new Chart(ctxWeekly, {
+        type: 'bar',
+        data: {
+            labels: weekLabels,
+            datasets: [
+                {
+                    label: 'Consumed (kcal)',
+                    data: weekCals,
+                    backgroundColor: '#10b981',
+                    borderRadius: 6,
+                },
+                {
+                    label: 'Goal (kcal)',
+                    data: weekGoals,
+                    type: 'line',
+                    borderColor: '#f59e0b',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#94a3b8' }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8' },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    const macroData = {{ macro_chart_json|safe }};
+    const ctxDonut = document.getElementById('macroDonutChart').getContext('2d');
+    const totalMacros = macroData.protein + macroData.carbs + macroData.fat;
+
+    new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+            labels: ['Protein', 'Carbs', 'Fat'],
+            datasets: [{
+                data: totalMacros > 0 ? [macroData.protein, macroData.carbs, macroData.fat] : [1, 1, 1],
+                backgroundColor: ['#3b82f6', '#f59e0b', '#ec4899'],
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '72%',
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}
